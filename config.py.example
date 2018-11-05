@@ -1,0 +1,5 @@
+wikidot_site = "scp-wiki"
+wikidot_username = "username"
+wikidot_api_key = "apikey"
+scuttle_token = """token"""
+scuttle_endpoint = "http://scuttle.int.bluesoul.net/api"
