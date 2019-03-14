@@ -60,6 +60,16 @@ if "-wikidot" in argv:
     for chunk in pages:
         for page in chunk:
             p.append(chunk[page])
+    # Take this metadata set and send it to SCUTTLE.
+
+    # Dump the resultant JSON to a string so we can send it on its way.
+    pstr = json.dumps(p)
+    f = open('2stacks-metadata.json', 'w')
+    f.write(pstr)
+    # Build the headers and let the SCUTTLE API know to expect a JSON file.
+    headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
+    # Put the file. This is controlled currently by API/PageController@wdstore.
+    r = requests.put(config.scuttle_endpoint + '/wikidot/metadata', data=pstr, headers=headers)
 
     # For every page in the wiki...
     for idx, item in enumerate(p):
@@ -114,8 +124,25 @@ if "-scrape=revisions" in argv:
     driver = webdriver.Chrome()
     for page in list(scrape_json.keys()):
         print "Processing " + str(page)
+        try:
+            if scrape_json[page]["revisions"]+1 == len(scrape_json[page]["wd_scraped_revisions"][0]):
+                print "SCUTTLE manifest indicates all revisions stored, skipping " + str(page)
+                continue
+        except NoSuchElementException:
+            print "Missing element."
+            pass
+        except IndexError:
+            pass
+        else:
+            print "revs:" + str(scrape_json[page]["revisions"]+1) + " and len_scraped: " + str(len(scrape_json[page]["wd_scraped_revisions"][0]))
         driver.get("http://" + config.wikidot_site + ".wikidot.com/" + page)
-
+        try:
+            deleted = driver.find_element_by_xpath('//h1[@id="toc0"]/span')
+            if deleted.text == "This page doesn't exist yet!":
+                print "Page has been deleted, skipping."
+                continue
+        except NoSuchElementException:
+            pass
         # On a single page, there's quite a few things we want:
         # * Revision history (who did what, when, and what was it?)
         # * Rating breakdown (who voted and how?)
@@ -133,7 +160,7 @@ if "-scrape=revisions" in argv:
         totalrevisions = int(match.group(2))+1
         print "Page shows " + str(totalrevisions) + " total revisions."
         try:
-            json_revision_count = len(scrape_json[page]["revisions"][0])
+            json_revision_count = len(scrape_json[page]["wd_scraped_revisions"][0])
         except IndexError:
             json_revision_count = 0
         print "SCUTTLE reports " + str(json_revision_count) + " stored revisions"
@@ -149,8 +176,15 @@ if "-scrape=revisions" in argv:
         driver.find_element_by_xpath('//*[@id="history-button"]').click()
 
         def process_page():
-            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
+            try:
+                WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
+            except TimeoutException:
+                WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="history-button"]')))
+                driver.find_element_by_xpath('//*[@id="history-button"]').click()
+                WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
+
             tblPageHistory = driver.find_element_by_xpath('//*[@id="revision-list"]/table/tbody')
+            sleep(0.5)
             rows = tblPageHistory.find_elements_by_tag_name('tr')
             for row in rows:
                 # Skip the header.
@@ -161,7 +195,7 @@ if "-scrape=revisions" in argv:
                 thisrev["wd_revision_id"] = int(revid.rstrip("."))
                 # Make sure this revisions is not already stored.
                 try:
-                    if thisrev["wd_revision_id"] in scrape_json[page]["revisions"][0]:
+                    if thisrev["wd_revision_id"] in scrape_json[page]["wd_scraped_revisions"][0]:
                         print "Revision " + str(thisrev["wd_revision_id"]) + " already stored in SCUTTLE, skipping."
                         continue
                 except IndexError:
@@ -185,6 +219,9 @@ if "-scrape=revisions" in argv:
                     thisrev["wd_user_id"] = int(match.group(2))
                 except NoSuchElementException:
                     # Account deleted
+                    thisrev["wd_user_id"] = 0
+                except AttributeError:
+                    # Anonymous user
                     thisrev["wd_user_id"] = 0
                 # Get the timestamp for the revision.
                 timestamp = row.find_element_by_xpath('./td[6]/span').get_attribute('class')
@@ -211,7 +248,7 @@ if "-scrape=revisions" in argv:
             # false.
             try:
                 print "Looking for pager and next button."
-                pager = driver.find_element_by_xpath('//div[@class="pager"]')
+                pager = driver.find_element_by_xpath('//*[@id="revision-list"]/div[@class="pager"]')
                 btnNext = pager.find_element_by_partial_link_text('next')
             except NoSuchElementException:
                 print "Couldn't find, page shows " + str(totalrevisions) + " revisions."
@@ -219,9 +256,8 @@ if "-scrape=revisions" in argv:
             else:
                 print "Found, clicking the next button."
                 btnNext.click()
-                sleep(0.5)
                 WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
+                    EC.staleness_of(tblPageHistory))
                 return True
         # If we only have one page of revisions, process it, otherwise go into a while loop and depend on the return
         # value to determine whether there's more revisions to process.
