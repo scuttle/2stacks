@@ -100,6 +100,8 @@ if "-wikidot" in argv:
                 print "Revision " + str(item["revisions"]) + " on wikidot vs. " + str(revision_json[item["fullname"]]) + " on SCUTTLE."
             except KeyError:  # New post.
                 print "New article."
+            except TypeError:  # Not sure, occured on the first insert after truncate of SCUTTLE DB and never again.
+                print "Type Error, check on this later."
 
 if "-scrape=revisions" in argv:
 # else:
@@ -122,7 +124,11 @@ if "-scrape=revisions" in argv:
     scrape_json = r_scrapes.json()
 
     driver = webdriver.Chrome()
+    skippedpages = ['sandbox', 'scp-style-resource']
     for page in list(scrape_json.keys()):
+        if page in skippedpages:
+            print "Skipping " + str(page) + " (in skippedpages list)"
+            continue
         print "Processing " + str(page)
         try:
             if scrape_json[page]["revisions"]+1 == len(scrape_json[page]["wd_scraped_revisions"][0]):
@@ -179,6 +185,7 @@ if "-scrape=revisions" in argv:
             try:
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
             except TimeoutException:
+                # On the off-chance it didn't fire the AJAX, wait a bit and click it again and see what happens.
                 WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="history-button"]')))
                 driver.find_element_by_xpath('//*[@id="history-button"]').click()
                 WebDriverWait(driver, 30).until(EC.presence_of_element_located((By.XPATH, '//*[@id="revision-list"]/table/tbody')))
@@ -235,6 +242,7 @@ if "-scrape=revisions" in argv:
                     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="page-source"]')))
                     thisrev["payload"] = driver.find_element_by_xpath('//div[@class="page-source"]').text
                 thisrev["page_id"] = scrape_json[page]["id"]
+                thisrev["rating"] = driver.find_element_by_xpath('//span[@class="rate-points"]/span').text
                 headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
                 payload = json.dumps(thisrev)
                 r = requests.put(config.scuttle_endpoint + '/scrape/revisions', data=payload, headers=headers)
