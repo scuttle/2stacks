@@ -1,6 +1,8 @@
 # 2stacks
 Tools for backing up scp-wiki.net.
 
+Please note this branch is considered **legacy** and support is not provided. A future library will provide platform-agnostic methods to create your own backups.
+
 ## Requirements
 * [Selenium Standalone Server](https://www.seleniumhq.org/download/)
 * Selenium Web Driver (`pip install selenium`)
