@@ -21,9 +21,11 @@ def lambda_handler(event, context):
         wikidot_site = record['messageAttributes']['wikidot_site']['stringValue']
         
         logger.info(wd_page_id)
-        
         data = {'pageId': wd_page_id, 'moduleName': 'pagerate/WhoRatedPageModule'}
-        haystack = helpers.fetch(data, wikidot_site)
+        try:
+            haystack = helpers.fetch(data, wikidot_site)
+        except:  # It gone.
+            return { 'job': 'article_deleted' }
         votes = re.findall('(?:#777\">\n)(?:\s*)([+-])', haystack)
         user_ids = re.findall('(?:u=)([^\)]*)', haystack)
         usernames = re.findall('(?:alt=\")([^\"]*)', haystack)
