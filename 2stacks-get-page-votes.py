@@ -26,23 +26,27 @@ def lambda_handler(event, context):
             haystack = helpers.fetch(data, wikidot_site)
         except:  # It gone.
             return { 'job': 'article_deleted' }
-        votes = re.findall('(?:#777\">\n)(?:\s*)([+-])', haystack)
+        votes = re.findall('(?:#777\">\n)(?:\s*)([12345+-])', haystack)
         user_ids = re.findall('(?:u=)([^\)]*)', haystack)
         usernames = re.findall('(?:alt=\")([^\"]*)', haystack)
         
-        innerpayload = {}
-        for row in range(len(user_ids)):
-            innerpayload[row] = (
-                {'user_id': user_ids[row], 'username': usernames[row], 'vote': votes[row]})
-        payload = {"wd_page_id": wd_page_id, "votes": innerpayload}
-        output = json.dumps(payload)
+        logger.info(str(len(votes)) + " votes found")
         
-        #  Send everything to SCUTTLE
-        headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
-        r = requests.put(callback_url + '/2stacks/page/votes', data=output, headers=headers)
-        if r.status_code == 500:
-            logger.info('500:')
-            logger.info(r.text)
+        if len(votes) > 0:
+        
+            innerpayload = {}
+            for row in range(len(user_ids)):
+                innerpayload[row] = (
+                    {'user_id': user_ids[row], 'username': usernames[row], 'vote': votes[row]})
+            payload = {"wd_page_id": wd_page_id, "votes": innerpayload}
+            output = json.dumps(payload)
+            
+            #  Send everything to SCUTTLE
+            headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
+            r = requests.put(callback_url + '/2stacks/page/votes', data=output, headers=headers)
+            if r.status_code == 500:
+                logger.info('500:')
+                logger.info(r.text)
 
     return {
         'job': 'complete'
