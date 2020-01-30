@@ -15,7 +15,7 @@ def lambda_handler(event, context):
         slugs = record['messageAttributes']['page_slug']['stringValue'].split(',')
         wikidot_site = record['messageAttributes']['wikidot_site']['stringValue']
         
-        # A typical payload has 1000 slugs. We're going to make a pages.get_one request for each slug so we get the most recent revision data as well as the other metadata stuff.
+        # A typical payload has 100 slugs. We're going to make a pages.get_one request for each slug so we get the most recent revision data as well as the other metadata stuff.
         for slug in slugs:
             
             #  Hit Wikidot's API
@@ -31,4 +31,7 @@ def lambda_handler(event, context):
             # logger.info(output)
             headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
             r = requests.put(callback_url + '/2stacks/scheduled/page/metadata', data=output, headers=headers)
-            
+        
+        return {
+            'job': 'complete'
+        }
