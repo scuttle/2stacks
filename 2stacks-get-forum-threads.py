@@ -4,16 +4,16 @@ import re
 import config
 import helpers
 
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     for record in event['Records']:
         callback_url = record['messageAttributes']['callback_url']['stringValue']
         forum_id = record['messageAttributes']['forum_id']['stringValue']
         wikidot_site = record['messageAttributes']['wikidot_site']['stringValue']
-        logger.info('Fetching forum ' + forum_id + ' for ' + wikidot_site)
+        # logger.info('Fetching forum ' + forum_id + ' for ' + wikidot_site)
         
         page_no = 1
         
@@ -35,7 +35,7 @@ def lambda_handler(event, context):
                 pages = re.findall('(?:<span class="pager-no">페이지: 1 / )(\d*)', haystack) # This technically returns 2 indistinguishable objects because Wikidot.
             else:  # SCP-EN and English-speaking wikis (Some -INT sites didn't have this translated, like -RU, -UA, -CN...)
                 pages = re.findall('(?:<span class="pager-no">page 1 of )(\d*)', haystack) # This technically returns 2 indistinguishable objects because Wikidot.
-            logger.info('There are ' + str(pages) + ' pages of threads to look through.')
+            # logger.info('There are ' + str(pages) + ' pages of threads to look through.')
         except:  # This only really fails on a deleted page.
             # TODO Make scuttle handle this.
             return False
@@ -62,7 +62,7 @@ def lambda_handler(event, context):
                     return False
                 payload = {"wd_forum_id": forum_id, "threads": threads}
                 output = json.dumps(payload)
-                logger.info('Sending page ' + str(page_no) + ' to SCUTTLE')
+                # logger.info('Sending page ' + str(page_no) + ' to SCUTTLE')
                 #  Send everything to SCUTTLE
                 headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
                 r = requests.put(callback_url + '/2stacks/forum/threads', data=output, headers=headers)

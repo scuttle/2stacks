@@ -10,9 +10,9 @@ import os
 from bs4 import BeautifulSoup
 
 #temp
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
@@ -54,7 +54,7 @@ def lambda_handler(event, context):
         
         # Get the OP of the thread. This is Wikidot for a per-page discussion thread or a user id otherwise.
         attribution = descriptionblock.find("span", {"class": "printuser"})
-        logger.info(attribution)
+        # logger.info(attribution)
         if attribution.string == "Wikidot":
             op_user_id = 0
             op_username = "Wikidot"
@@ -99,7 +99,7 @@ def lambda_handler(event, context):
         # Let's handle things the same way for one page or many.
         for page in range(maxpages):
             actualpage = page + 1
-            logger.info('On Page ' + str(actualpage))
+            # logger.info('On Page ' + str(actualpage))
             innerpayload = {}
             haystack = get_thread_page(thread=wd_thread_id, page=actualpage, wikidot_site=wikidot_site)  # I'm too lazy to not just increment this range by one to make it work.
             soup = BeautifulSoup(haystack.replace("\\","")[2:], 'html.parser')
@@ -108,7 +108,7 @@ def lambda_handler(event, context):
             # logger.info(len(posts))
             for idx, post in enumerate(posts):
                 wd_post_id = int(re.search('(?:<div class="post" id="post-)(\d*)', str(post)).group(1))
-                logger.info("Post " + str(idx) + ", ID " + str(wd_post_id))
+                # logger.info("Post " + str(idx) + ", ID " + str(wd_post_id))
                 subject = re.search('(?:<div class="title" id="post-title-\d*">\s*)([^\n]*)', str(post)).group(1)
                 # On a blank subject this returns as "</div>"
                 if subject == "</div>":
@@ -117,10 +117,10 @@ def lambda_handler(event, context):
                     username = re.search('(?:return false;">)([^<]*)(?:<\/a><\/span>,)', str(post)).group(1)
                     wd_user_id = int(re.search('(?:www\.wikidot\.com\/userkarma.php\?u=)([^\)]*)', str(post)).group(1))
                 except AttributeError: #NoneType, deleted user.
-                    logger.info('thread:')
-                    logger.info(wd_thread_id)
-                    logger.info('post:')
-                    logger.info(wd_post_id)
+                    # logger.info('thread:')
+                    # logger.info(wd_thread_id)
+                    # logger.info('post:')
+                    # logger.info(wd_post_id)
                     try:
                         wd_user_id = int(re.search('(?:data-id=")(\d*)', str(post)).group(1))
                         username = "Deleted Account " + str(wd_user_id)
@@ -135,7 +135,7 @@ def lambda_handler(event, context):
                                 wd_user_id = 0
                             except AttributeError: # This is getting ridiculous. More guest account types.
                                 try:
-                                    logger.info(str(post))
+                                    # logger.info(str(post))
                                     username = re.search('(?:&amp;default=http:\/\/www.wikidot.com/common--images/avatars/default/a16.png&amp;size=16"\/><\/a>)([^>]*)(?:<\/span>,)', str(post)).group(1)
                                     wd_user_id = 0
                                 except AttributeError:
@@ -188,7 +188,7 @@ def lambda_handler(event, context):
                 # logger.info('text is a ')
                 # logger.info(type(body))
             # While we could wait and send one big payload, that's a risky proposition on threads with lots of posts so let's not.
-            logger.info('out of the loop for a single page')
+            # logger.info('out of the loop for a single page')
             
             # Wrap the payload and send it, SCUTTLE can sort out posts it already has.
             outerpayload = {"wd_thread_id": int(wd_thread_id), "wd_forum_id": forum, 
@@ -215,7 +215,7 @@ def lambda_handler(event, context):
             output = json.dumps(outerpayload)
             headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
             r = requests.put(callback_url + '/2stacks/thread/posts', data=output, headers=headers)
-            logger.info('Made a SCUTTLE Request!')
+            # logger.info('Made a SCUTTLE Request!')
             # logger.info('DATA: ')
             # logger.info(outerpayload)
 

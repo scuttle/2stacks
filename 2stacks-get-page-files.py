@@ -9,9 +9,9 @@ import urllib
 from time import sleep
 from xmlrpc.client import ServerProxy
 
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     for record in event['Records']:
@@ -60,7 +60,7 @@ def lambda_handler(event, context):
                     else:
                         pass
             for idx, file in enumerate(files):
-                logger.info(idx)
+                # logger.info(idx)
                 sanitizedfilename = urllib.parse.quote(file, safe='')
                 info = s.files.get_meta({"site": wikidot_site, "page": slug, "files": [file]})
                 # logger.info(info[file]['download_url'])
@@ -85,9 +85,9 @@ def lambda_handler(event, context):
                 headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
                 j = json.dumps(payload)
                 r = requests.put(callback_url + '/2stacks/page/files', data=j, headers=headers)
-                if r.status_code == 500:
-                    logger.info('500:')
-                    logger.info(r.text)
+                # if r.status_code == 500:
+                #     logger.info('500:')
+                #     logger.info(r.text)
                 #  Be Nice
                 sleep(0.25)
     

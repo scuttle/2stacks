@@ -9,9 +9,9 @@ import boto3
 import os
 
 #temp
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     for record in event['Records']:
@@ -57,6 +57,6 @@ def lambda_handler(event, context):
         #  Send everything to SCUTTLE
         headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
         r = requests.put(callback_url + '/2stacks/forum/metadata', data=output, headers=headers)
-        if r.status_code == 500:
-            logger.info('500:')
-            logger.info(r.text)
+        # if r.status_code == 500:
+        #     logger.info('500:')
+        #     logger.info(r.text)

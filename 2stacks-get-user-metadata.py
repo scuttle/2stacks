@@ -1,15 +1,15 @@
 import json
 import boto3
 from botocore.exceptions import ClientError
-import logging
+# import logging
 import helpers
 import requests
 import re
 import config
 import os
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 def lambda_handler(event, context):
     for record in event['Records']:

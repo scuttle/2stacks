@@ -9,9 +9,9 @@ import boto3
 import os
 
 #temp
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
@@ -19,8 +19,8 @@ def lambda_handler(event, context):
         callback_url = record['messageAttributes']['callback_url']['stringValue']
         wd_page_id = record['messageAttributes']['page_id']['stringValue']
         wikidot_site = record['messageAttributes']['wikidot_site']['stringValue']
-        logger.info(wikidot_site)
-        logger.info(wd_page_id)
+        # logger.info(wikidot_site)
+        # logger.info(wd_page_id)
 
         data = {'page_id': wd_page_id, 'moduleName': 'history/PageRevisionListModule', 'perpage': 99999}
         haystack = helpers.fetch(data, wikidot_site)
@@ -57,10 +57,10 @@ def lambda_handler(event, context):
             revision_type[idx] = ''.join(revision) # Flatten the tuple to one string object.
         
         innerpayload = {}
-        logger.info(str(len(revision_ids)) + " revisions.")
-        logger.info(str(len(revision_type)) + " revision type rows.")
-        for row in range(len(revision_type)):
-            logger.info(revision_type[row])
+        # logger.info(str(len(revision_ids)) + " revisions.")
+        # logger.info(str(len(revision_type)) + " revision type rows.")
+        # for row in range(len(revision_type)):
+        #     logger.info(revision_type[row])
         for row in range(len(revision_ids)):
             # logger.info("Processing revision " + revision_numbers[row])
             # We need to handle some edge cases for deleted and anonymous users.
@@ -85,9 +85,9 @@ def lambda_handler(event, context):
         #  Send everything to SCUTTLE
         headers = {"Authorization": "Bearer " + config.scuttle_token, "Content-Type": "application/json"}
         r = requests.put(callback_url + '/2stacks/page/revisions', data=output, headers=headers)
-        if r.status_code == 500:
-            logger.info('500:')
-            logger.info(r.text)
+        # if r.status_code == 500:
+        #     logger.info('500:')
+        #     logger.info(r.text)
 
     return {
         'job': 'complete'

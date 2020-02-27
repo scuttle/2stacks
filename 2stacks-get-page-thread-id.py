@@ -9,9 +9,9 @@ import boto3
 import os
 
 #temp
-import logging
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+# import logging
+# logger = logging.getLogger()
+# logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
@@ -22,7 +22,7 @@ def lambda_handler(event, context):
         
         data = {'pageId': wd_page_id, 'moduleName': 'forum/ForumCommentsListModule'}
         haystack = helpers.fetch(data, wikidot_site)
-        logger.info(haystack)
+        # logger.info(haystack)
         try:
             thread_id = re.search('(?:forumThreadId = )(\d*)', haystack).group(1)
         except:  # This only really fails on a deleted page.

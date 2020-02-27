@@ -8,7 +8,6 @@ def lambda_handler(event, context):
         wd_page_id = record['messageAttributes']['page_id']['stringValue']
         wikidot_site = record['messageAttributes']['wikidot_site']['stringValue']
         
-        logger.info(wd_page_id)
         data = {'page_id': wd_page_id, 'moduleName': 'pagerate/PageRateWidgetModule'}
         try:
             haystack = helpers.fetch(data, wikidot_site)
